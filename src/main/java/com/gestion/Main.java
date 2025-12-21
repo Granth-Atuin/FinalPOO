@@ -62,5 +62,26 @@ public class Main {
         }
 
         System.out.println("\n--- Fin de Demo Core Logic (60%) ---");
+
+        // Test extra: Materia con correlativa pero SIN condición explícita (null)
+        // Esto verifica el fix de 'default behavior'
+        Materia m4 = new Materia("Estructuras de Datos", "SYS-201");
+        plan.agregarMateriaObligatoria(m4, 3); // Método de la clase PlanDeEstudios (2 args)
+        // plan.setCondicionInscripcion(m4, null); // Por defecto es null/absent
+        // Le asignamos m2 (Prog II) como correlativa
+        java.util.List<Materia> corrsM4 = new java.util.ArrayList<>();
+        corrsM4.add(m2);
+        plan.setCorrelativas(m4, corrsM4);
+
+        System.out.println("\n--- Intento de Inscripción a Estructuras de Datos (Correlativa Implícita) ---");
+        // El alumno ya aprobó m1 (Prog I) en el paso anterior, pero NO m2 (Prog II).
+        // Por ende, no debería poder cursar m4 que requiere m2.
+
+        if (plan.puedeCursar(alumno, m4)) {
+            alumno.inscribirMateria(m4);
+            System.out.println("ERROR: Se permitió inscribirse a Estructuras sin tener Prog II aprobada.");
+        } else {
+            System.out.println("ÉXITO VALIDACIÓN DEFAULT: Bloqueada inscripción por falta de correlativa (Prog II).");
+        }
     }
 }

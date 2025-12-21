@@ -69,8 +69,14 @@ public class PlanDeEstudios implements PlanEstudio {
     public boolean puedeCursar(Alumno alumno, Materia materia) {
         CondicionInscripcion condicion = condicionesInscripcion.get(materia);
         if (condicion == null) {
-            // Si no hay condición explícita, asumimos que puede cursar (o definir regla
-            // default)
+            // Si no hay condición explícita, verificamos las correlativas estándar
+            // (equivalente a CondicionInscripcionA)
+            List<Materia> corrs = getCorrelativas(materia);
+            for (Materia correlativa : corrs) {
+                if (!alumno.tieneCursadaAprobada(correlativa)) {
+                    return false;
+                }
+            }
             return true;
         }
         return condicion.esCumplida(alumno, materia, this);
