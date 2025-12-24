@@ -1,6 +1,9 @@
 package com.gestion;
 
-import com.gestion.condiciones.*;
+import com.gestion.model.*;
+import com.gestion.model.condiciones.*;
+import com.gestion.view.VentanaPrincipal;
+import javax.swing.*;
 
 public class Main {
     public static void main(String[] args) {
@@ -82,6 +85,24 @@ public class Main {
             System.out.println("ERROR: Se permitió inscribirse a Estructuras sin tener Prog II aprobada.");
         } else {
             System.out.println("ÉXITO VALIDACIÓN DEFAULT: Bloqueada inscripción por falta de correlativa (Prog II).");
+            System.out.println("ÉXITO VALIDACIÓN DEFAULT: Bloqueada inscripción por falta de correlativa (Prog II).");
         }
+
+        // Iniciar Interfaz Gráfica
+        System.out.println("\n--- Iniciando GUI ---");
+        try {
+            UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        // Cargar datos en el Singleton Facultad para la GUI (si no están ya cargados)
+        // Nota: Los datos creados manualmente arriba (m1, m2...) son locales al main.
+        // Facultad cargará su propio set de prueba en cargarDatosIniciales().
+        com.gestion.model.Facultad.getInstance().cargarDatosIniciales();
+
+        SwingUtilities.invokeLater(() -> {
+            new VentanaPrincipal().setVisible(true);
+        });
     }
 }

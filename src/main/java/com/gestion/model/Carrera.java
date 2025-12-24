@@ -1,4 +1,4 @@
-package com.gestion;
+package com.gestion.model;
 
 public class Carrera {
     private static int CONTADOR_IDS = 1;

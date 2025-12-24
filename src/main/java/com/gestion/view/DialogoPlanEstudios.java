@@ -1,22 +1,24 @@
-package com.gestion.ui;
+package com.gestion.view;
 
-import com.gestion.Carrera;
-
-import com.gestion.Materia;
+import com.gestion.controller.CarreraController;
+import com.gestion.model.Carrera;
+import com.gestion.model.Materia;
 
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
 import java.awt.*;
-import java.util.List;
 import java.util.ArrayList;
+import java.util.List;
 
 public class DialogoPlanEstudios extends JDialog {
     private Carrera carrera;
     private DefaultTableModel tableModel;
+    private CarreraController controller;
 
-    public DialogoPlanEstudios(Frame owner, Carrera carrera) {
+    public DialogoPlanEstudios(Frame owner, Carrera carrera, CarreraController controller) {
         super(owner, "Plan de Estudios: " + carrera.getNombre(), true);
         this.carrera = carrera;
+        this.controller = controller;
         setSize(700, 500);
         setLocationRelativeTo(owner);
         setLayout(new BorderLayout());
@@ -30,6 +32,27 @@ public class DialogoPlanEstudios extends JDialog {
             }
         };
         JTable table = new JTable(tableModel);
+
+        // Listener para doble clic
+        table.addMouseListener(new java.awt.event.MouseAdapter() {
+            @Override
+            public void mouseClicked(java.awt.event.MouseEvent e) {
+                if (e.getClickCount() == 2) {
+                    int row = table.getSelectedRow();
+                    int col = table.getSelectedColumn();
+                    if (row != -1 && col != -1) {
+                        Object data = table.getValueAt(row, col);
+                        if (data != null && !data.toString().isEmpty()) {
+                            JOptionPane.showMessageDialog(DialogoPlanEstudios.this,
+                                    data.toString(),
+                                    "Detalle de " + table.getColumnName(col),
+                                    JOptionPane.INFORMATION_MESSAGE);
+                        }
+                    }
+                }
+            }
+        });
+
         add(new JScrollPane(table), BorderLayout.CENTER);
 
         // Botones
@@ -51,18 +74,21 @@ public class DialogoPlanEstudios extends JDialog {
         tableModel.setRowCount(0);
         // Ahora las materias están en la Carrera
         List<Materia> materias = carrera.getMaterias();
-        // Ordenar por cuatrimestre
-        materias.sort(java.util.Comparator.comparingInt(Materia::getCuatrimestre));
+        // Ordenar por cuatrimestre usando el Plan
+        materias.sort((m1, m2) -> Integer.compare(carrera.getPlan().getCuatrimestre(m1),
+                carrera.getPlan().getCuatrimestre(m2)));
 
         for (Materia m : materias) {
-            // Correlativas ahora están en la Materia misma
-            List<Materia> corrs = m.getCorrelativas();
+            // Correlativas ahora se obtienen del Plan
+            List<Materia> corrs = carrera.getPlan().getCorrelativas(m);
             StringBuilder sb = new StringBuilder();
             for (Materia c : corrs)
-                sb.append(c.getCodigo()).append(" ");
+                sb.append(c.getNombre()).append(", "); // Mostrar Nombre
+            if (sb.length() > 2)
+                sb.setLength(sb.length() - 2);
 
             tableModel.addRow(new Object[] {
-                    m.getCuatrimestre(),
+                    carrera.getPlan().getCuatrimestre(m), // Obtener del Plan
                     m.getCodigo(),
                     m.getNombre(),
                     sb.toString(),
@@ -86,7 +112,7 @@ public class DialogoPlanEstudios extends JDialog {
             return;
 
         // Mostrar lista de materias CANDIDATAS (deben ser de la misma carrera)
-        List<Materia> candidatos = new ArrayList<>(carrera.getMaterias());
+        java.util.List<Materia> candidatos = new ArrayList<>(carrera.getMaterias());
         candidatos.remove(materiaSeleccionada); // No puede ser correlativa de sí misma
 
         JList<Materia> listCandidatos = new JList<>(candidatos.toArray(new Materia[0]));
@@ -95,16 +121,11 @@ public class DialogoPlanEstudios extends JDialog {
         int opt = JOptionPane.showConfirmDialog(this, new JScrollPane(listCandidatos),
                 "Seleccione Correlativas Previas", JOptionPane.OK_CANCEL_OPTION);
         if (opt == JOptionPane.OK_OPTION) {
-            List<Materia> seleccionadas = listCandidatos.getSelectedValuesList();
-            // Limpiar previas y agregar nuevas
-            // Nota: Materia.correlativas es una lista, podriamos hacer set si agregamos el
-            // metodo, o limpiar
-            // Como no agregué metodo 'set', hare loop.
-            // Mejor agrego metodo setCorrelativas a Materia o uso el getter para limpiar.
-            materiaSeleccionada.getCorrelativas().clear();
-            for (Materia s : seleccionadas) {
-                materiaSeleccionada.agregarCorrelativa(s);
-            }
+            java.util.List<Materia> seleccionadas = listCandidatos.getSelectedValuesList();
+
+            // Usar controlador
+            controller.asignarCorrelativas(carrera.getPlan(), materiaSeleccionada, seleccionadas);
+
             cargarPlan();
         }
     }

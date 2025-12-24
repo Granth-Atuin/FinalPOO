@@ -1,8 +1,8 @@
-package com.gestion.ui;
+package com.gestion.view;
 
-import com.gestion.Carrera;
-import com.gestion.Facultad;
-import com.gestion.Materia;
+import com.gestion.controller.CarreraController;
+import com.gestion.model.Carrera;
+import com.gestion.model.Materia;
 
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
@@ -18,9 +18,11 @@ public class DialogoCatalogoMaterias extends JDialog {
     private JComboBox<Object> comboFiltro; // Object para permitir String "Todas" y Carrera
     private DefaultTableModel tableModel;
     private TableRowSorter<DefaultTableModel> sorter;
+    private CarreraController controller;
 
-    public DialogoCatalogoMaterias(Frame owner) {
+    public DialogoCatalogoMaterias(Frame owner, CarreraController controller) {
         super(owner, "Catálogo de Materias", true);
+        this.controller = controller;
         setSize(600, 400);
         setLocationRelativeTo(owner);
         setLayout(new BorderLayout());
@@ -31,7 +33,7 @@ public class DialogoCatalogoMaterias extends JDialog {
 
         comboFiltro = new JComboBox<>();
         comboFiltro.addItem("Todas");
-        for (Carrera c : Facultad.getInstance().getCarreras()) {
+        for (Carrera c : controller.listarCarreras()) {
             comboFiltro.addItem(c);
         }
 
@@ -82,7 +84,7 @@ public class DialogoCatalogoMaterias extends JDialog {
 
     private void cargarTodasLasMaterias() {
         tableModel.setRowCount(0);
-        List<Materia> materias = new ArrayList<>(Facultad.getInstance().getMaterias());
+        List<Materia> materias = new ArrayList<>(controller.getMaterias());
         materias.sort(Comparator.comparing(Materia::getNombre)); // Orden alfabético
 
         for (Materia m : materias) {
@@ -119,7 +121,7 @@ public class DialogoCatalogoMaterias extends JDialog {
             // Buscar la materia real (podríamos optimizar, pero búsqueda lineal global es
             // segura por ahora)
             Materia target = null;
-            for (Materia m : Facultad.getInstance().getMaterias()) {
+            for (Materia m : controller.getMaterias()) {
                 if (m.getCodigo().equals(codigo)) {
                     target = m;
                     break;
@@ -145,7 +147,7 @@ public class DialogoCatalogoMaterias extends JDialog {
         }
 
         String codigo = (String) table.getValueAt(row, 0);
-        Materia materiaActual = Facultad.getInstance().getMaterias().stream()
+        Materia materiaActual = controller.getMaterias().stream()
                 .filter(m -> m.getCodigo().equals(codigo)).findFirst().orElse(null);
 
         if (materiaActual == null)
@@ -166,7 +168,7 @@ public class DialogoCatalogoMaterias extends JDialog {
             // Selector simple
             String inputCodigo = JOptionPane.showInputDialog(d, "Ingrese Código de materia equivalente:");
             if (inputCodigo != null) {
-                Materia equiv = Facultad.getInstance().getMaterias().stream()
+                Materia equiv = controller.getMaterias().stream()
                         .filter(m -> m.getCodigo().equalsIgnoreCase(inputCodigo)).findFirst().orElse(null);
                 if (equiv != null && !equiv.equals(materiaActual)) {
                     materiaActual.agregarEquivalencia(equiv);

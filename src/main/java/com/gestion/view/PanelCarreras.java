@@ -1,17 +1,19 @@
-package com.gestion.ui;
+package com.gestion.view;
 
-import com.gestion.Carrera;
-import com.gestion.Facultad;
-import com.gestion.Materia;
-import com.gestion.PlanDeEstudios;
+import com.gestion.controller.CarreraController;
+import com.gestion.model.Carrera;
+import com.gestion.model.Materia;
+import com.gestion.model.PlanDeEstudios;
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
 import java.awt.*;
 
 public class PanelCarreras extends JPanel {
     private DefaultTableModel tableModel;
+    private CarreraController controller;
 
     public PanelCarreras() {
+        this.controller = new CarreraController();
         setLayout(new BorderLayout());
 
         JLabel title = new JLabel("Gestión de Carreras");
@@ -24,7 +26,6 @@ public class PanelCarreras extends JPanel {
         add(new JScrollPane(table), BorderLayout.CENTER);
 
         // Botón Refrescar
-        // Botón Refrescar
         JButton btnNuevaMateria = new JButton("Nueva Materia");
         JButton btnNuevaCarrera = new JButton("Nueva Carrera");
         JButton btnCatalogo = new JButton("Catálogo Materias");
@@ -34,7 +35,8 @@ public class PanelCarreras extends JPanel {
         btnNuevaMateria.addActionListener(e -> agregarMateria());
         btnNuevaCarrera.addActionListener(e -> agregarCarrera());
         btnCatalogo.addActionListener(
-                e -> new DialogoCatalogoMaterias((Frame) SwingUtilities.getWindowAncestor(this)).setVisible(true));
+                e -> new DialogoCatalogoMaterias((Frame) SwingUtilities.getWindowAncestor(this), controller)
+                        .setVisible(true));
         btnVerPlan.addActionListener(
                 e -> verPlanSeleccionado((JTable) ((JScrollPane) getComponent(1)).getViewport().getView()));
         btnRefrescar.addActionListener(e -> refrescarTabla());
@@ -53,7 +55,7 @@ public class PanelCarreras extends JPanel {
 
     private void refrescarTabla() {
         tableModel.setRowCount(0);
-        for (Carrera c : Facultad.getInstance().getCarreras()) {
+        for (Carrera c : controller.listarCarreras()) {
             // PlanEstudio es interfaz, casteamos a PlanBasico si necesitamos nombre o
             // usamos nombre generico
             String nombrePlan = c.getPlan().getNombre();
@@ -71,7 +73,7 @@ public class PanelCarreras extends JPanel {
         JTextField txtNombre = new JTextField();
         JComboBox<Carrera> cmbCarreras = new JComboBox<>();
 
-        for (Carrera c : Facultad.getInstance().getCarreras()) {
+        for (Carrera c : controller.listarCarreras()) {
             cmbCarreras.addItem(c);
         }
 
@@ -114,10 +116,10 @@ public class PanelCarreras extends JPanel {
                 return;
             }
 
-            String codigo = Facultad.getInstance().generarProximoCodigoMateria(carreraSeleccionada.getId());
+            String codigo = controller.generarProximoCodigoMateria(carreraSeleccionada.getId());
             Materia m = new Materia(nombre, codigo);
             // Agregar a global
-            Facultad.getInstance().agregarMateria(m);
+            controller.agregarMateria(m);
             // Agregar a la carrera (Ahora la carrera tiene la lista)
             carreraSeleccionada.agregarMateria(m);
 
@@ -128,7 +130,7 @@ public class PanelCarreras extends JPanel {
     private void agregarCarrera() {
         JTextField txtNombre = new JTextField();
         // Selección con CheckBoxList
-        java.util.List<Materia> todas = Facultad.getInstance().getMaterias();
+        java.util.List<Materia> todas = controller.getMaterias();
         CheckBoxListPanel<Materia> listaMaterias = new CheckBoxListPanel<>(todas);
 
         JPanel pnl = new JPanel(new GridBagLayout());
@@ -169,7 +171,7 @@ public class PanelCarreras extends JPanel {
                     nueva.agregarMateria(m);
                 }
 
-                Facultad.getInstance().agregarCarrera(nueva);
+                controller.agregarCarrera(nueva);
                 refrescarTabla();
             }
         }
@@ -183,11 +185,12 @@ public class PanelCarreras extends JPanel {
         }
 
         String nombreCarrera = (String) table.getValueAt(row, 0);
-        Carrera carrera = Facultad.getInstance().getCarreras().stream()
+        Carrera carrera = controller.listarCarreras().stream()
                 .filter(c -> c.getNombre().equals(nombreCarrera)).findFirst().orElse(null);
 
         if (carrera != null) {
-            new DialogoPlanEstudios((Frame) SwingUtilities.getWindowAncestor(this), carrera).setVisible(true);
+            new DialogoPlanEstudios((Frame) SwingUtilities.getWindowAncestor(this), carrera, controller)
+                    .setVisible(true);
         }
     }
 }

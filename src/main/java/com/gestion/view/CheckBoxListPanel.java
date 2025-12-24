@@ -1,4 +1,4 @@
-package com.gestion.ui;
+package com.gestion.view;
 
 import javax.swing.*;
 import java.util.ArrayList;

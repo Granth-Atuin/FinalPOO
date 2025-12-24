@@ -1,4 +1,4 @@
-package com.gestion.ui;
+package com.gestion.view;
 
 import javax.swing.*;
 import java.awt.*;
@@ -83,8 +83,8 @@ public class VentanaPrincipal extends JFrame {
     }
 
     public static void main(String[] args) {
-        // Cargar datos de prueba directamente en Facultad o via un helper
-        com.gestion.Facultad.getInstance().cargarDatosFake();
+        // Cargar datos de prueba para ejecución aislada
+        com.gestion.model.Facultad.getInstance().cargarDatosIniciales();
 
         System.out.println("Iniciando interfaz gráfica...");
         SwingUtilities.invokeLater(() -> {

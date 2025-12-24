@@ -1,4 +1,4 @@
-package com.gestion;
+package com.gestion.model;
 
 public class Cursada {
     private Materia materia;

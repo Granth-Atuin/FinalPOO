@@ -1,6 +1,6 @@
-package com.gestion;
+package com.gestion.model;
 
-import com.gestion.condiciones.CondicionInscripcion;
+import com.gestion.model.condiciones.CondicionInscripcion;
 import java.util.List;
 
 public class PlanDeEstudiosBuilder {

@@ -1,7 +1,7 @@
-package com.gestion.ui;
+package com.gestion.view;
 
-import com.gestion.Facultad;
-import com.gestion.Materia;
+import com.gestion.controller.CarreraController;
+import com.gestion.model.Materia;
 
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
@@ -11,8 +11,10 @@ import java.awt.event.MouseEvent;
 
 public class PanelMaterias extends JPanel {
     private DefaultTableModel tableModel;
+    private CarreraController controller;
 
     public PanelMaterias() {
+        this.controller = new CarreraController();
         setLayout(new BorderLayout());
 
         JLabel title = new JLabel("Gestión de Materias Globales");
@@ -63,7 +65,7 @@ public class PanelMaterias extends JPanel {
 
     private void refrescarTabla() {
         tableModel.setRowCount(0);
-        for (Materia m : Facultad.getInstance().getMaterias()) {
+        for (Materia m : controller.getMaterias()) {
             tableModel.addRow(new Object[] { m.getCodigo(), m.getNombre() });
         }
     }
@@ -100,10 +102,10 @@ public class PanelMaterias extends JPanel {
             String cod = txtCodigo.getText().trim();
 
             if (!nom.isEmpty() && !cod.isEmpty()) {
-                if (Facultad.getInstance().existeMateria(cod)) {
+                if (controller.existeMateria(cod)) {
                     JOptionPane.showMessageDialog(this, "El código ya existe.");
                 } else {
-                    Facultad.getInstance().agregarMateria(new Materia(nom, cod));
+                    controller.agregarMateria(new Materia(nom, cod));
                     refrescarTabla();
                 }
             } else {
@@ -116,7 +118,7 @@ public class PanelMaterias extends JPanel {
         int row = table.getSelectedRow();
         if (row >= 0) {
             String codigo = (String) table.getValueAt(row, 0);
-            Materia m = Facultad.getInstance().getMaterias().stream()
+            Materia m = controller.getMaterias().stream()
                     .filter(mat -> mat.getCodigo().equals(codigo))
                     .findFirst().orElse(null);
 

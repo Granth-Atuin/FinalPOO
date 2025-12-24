@@ -1,6 +1,11 @@
-package com.gestion.ui;
+package com.gestion.view;
 
-import com.gestion.*;
+import com.gestion.controller.AlumnoController;
+import com.gestion.model.Alumno;
+import com.gestion.model.Carrera;
+import com.gestion.model.Cursada;
+
+import com.gestion.model.Materia;
 
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
@@ -12,8 +17,10 @@ public class PanelInscripciones extends JPanel {
     private JComboBox<Materia> comboMaterias;
     private DefaultTableModel modelHistorial;
     private JTable tablaHistorial;
+    private AlumnoController alumnoController;
 
     public PanelInscripciones() {
+        this.alumnoController = new AlumnoController();
         setLayout(new BorderLayout());
 
         // Panel Superior: Selectores
@@ -54,7 +61,7 @@ public class PanelInscripciones extends JPanel {
 
     private void cargarAlumnos() {
         comboAlumnos.removeAllItems();
-        for (Alumno a : com.gestion.Facultad.getInstance().getAlumnos()) {
+        for (Alumno a : alumnoController.listarAlumnos()) {
             comboAlumnos.addItem(a);
         }
     }
@@ -73,9 +80,15 @@ public class PanelInscripciones extends JPanel {
     private void actualizarMaterias() {
         comboMaterias.removeAllItems();
         Carrera c = (Carrera) comboCarreras.getSelectedItem();
-        if (c != null) {
+        Alumno a = (Alumno) comboAlumnos.getSelectedItem();
+        if (c != null && a != null) {
             for (Materia m : c.getPlan().getAllMaterias()) {
-                comboMaterias.addItem(m);
+                if (!a.tieneCursadaAprobada(m) && !a.estaCursando(m)) {
+                    // Verificar correlativas
+                    if (c.getPlan().puedeCursar(a, m)) {
+                        comboMaterias.addItem(m);
+                    }
+                }
             }
         }
     }

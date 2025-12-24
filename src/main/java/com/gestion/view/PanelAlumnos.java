@@ -1,8 +1,9 @@
-package com.gestion.ui;
+package com.gestion.view;
 
-import com.gestion.Alumno;
-import com.gestion.Carrera;
-import com.gestion.Facultad;
+import com.gestion.controller.AlumnoController;
+import com.gestion.controller.CarreraController;
+import com.gestion.model.Alumno;
+import com.gestion.model.Carrera;
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
 import java.awt.*;
@@ -10,8 +11,13 @@ import java.awt.*;
 public class PanelAlumnos extends JPanel {
     private DefaultTableModel tableModel;
     private Alumno alumnoEditar = null;
+    private AlumnoController alumnoController;
+    private CarreraController carreraController;
 
     public PanelAlumnos() {
+        this.alumnoController = new AlumnoController();
+        this.carreraController = new CarreraController(); // Para listar carreras
+
         setLayout(new BorderLayout());
 
         // Título
@@ -37,7 +43,7 @@ public class PanelAlumnos extends JPanel {
             int selectedRow = table.getSelectedRow();
             if (selectedRow >= 0) {
                 int legajo = (int) tableModel.getValueAt(selectedRow, 0);
-                Alumno a = Facultad.getInstance().buscarAlumnoPorLegajo(legajo);
+                Alumno a = alumnoController.buscarAlumnoPorLegajo(legajo);
                 if (a != null) {
                     mostrarDialogoAlumno(a);
                 }
@@ -60,7 +66,7 @@ public class PanelAlumnos extends JPanel {
 
     private void refrescarTabla() {
         tableModel.setRowCount(0); // Limpiar
-        for (Alumno a : Facultad.getInstance().getAlumnos()) {
+        for (Alumno a : alumnoController.listarAlumnos()) {
             StringBuilder carrerasStr = new StringBuilder();
             for (Carrera c : a.getCarrerasInscriptas()) {
                 carrerasStr.append(c.getNombre()).append(", ");
@@ -88,7 +94,9 @@ public class PanelAlumnos extends JPanel {
 
         JTextField txtNombre = new JTextField(alumnoEditar != null ? alumnoEditar.getNombre() : "");
         JTextField txtApellido = new JTextField(alumnoEditar != null ? alumnoEditar.getApellido() : "");
-        JTextField txtLegajo = new JTextField(alumnoEditar != null ? String.valueOf(alumnoEditar.getLegajo()) : "");
+        JTextField txtLegajo = new JTextField(
+                alumnoEditar != null ? String.valueOf(alumnoEditar.getLegajo()) : "Generado Automáticamente");
+        txtLegajo.setEditable(false);
 
         JPanel pnlInputs = new JPanel(new GridBagLayout());
         pnlInputs.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
@@ -133,7 +141,8 @@ public class PanelAlumnos extends JPanel {
         gbc.gridy = 4;
         gbc.weighty = 1.0;
         gbc.fill = GridBagConstraints.BOTH;
-        CheckBoxListPanel<Carrera> pnlCarreras = new CheckBoxListPanel<>(Facultad.getInstance().getCarreras());
+        // Usar carreraController para listar carreras
+        CheckBoxListPanel<Carrera> pnlCarreras = new CheckBoxListPanel<>(carreraController.listarCarreras());
         pnlInputs.add(new JScrollPane(pnlCarreras), gbc);
 
         dialog.add(pnlInputs, BorderLayout.CENTER);
@@ -146,35 +155,35 @@ public class PanelAlumnos extends JPanel {
             try {
                 String nombre = txtNombre.getText();
                 String apellido = txtApellido.getText();
-                int legajo = Integer.parseInt(txtLegajo.getText());
+                // int legajo = Integer.parseInt(txtLegajo.getText()); // Ya no se lee del input
 
                 if (alumnoEditar == null) {
                     // Alta
-                    Alumno nuevo = new Alumno(nombre, apellido, legajo);
-                    Facultad.getInstance().agregarAlumno(nuevo);
+                    int nuevoLegajo = alumnoController.generarNuevoLegajo();
+                    Alumno nuevo = new Alumno(nombre, apellido, nuevoLegajo);
+                    alumnoController.agregarAlumno(nuevo);
                     // Inscribir a carreras seleccionadas
                     for (Carrera c : pnlCarreras.getSelectedItems()) {
-                        nuevo.agregarCarrera(c);
-                        c.inscribirAlumno(nuevo);
+                        alumnoController.inscribirACarrera(nuevo, c);
                     }
                 } else {
                     // Modificación
                     alumnoEditar.setNombre(nombre);
                     alumnoEditar.setApellido(apellido);
-                    alumnoEditar.setLegajo(legajo);
+                    // alumnoEditar.setLegajo(legajo); // Legajo no se edita
+
                     // Nota: No gestionamos cambio de carreras en edición simple por ahora,
                     // o podríamos agregar lógica para agregar nuevas.
                     for (Carrera c : pnlCarreras.getSelectedItems()) {
                         if (!alumnoEditar.getCarreras().contains(c)) {
-                            alumnoEditar.agregarCarrera(c);
-                            c.inscribirAlumno(alumnoEditar);
+                            alumnoController.inscribirACarrera(alumnoEditar, c);
                         }
                     }
                 }
                 refrescarTabla();
                 dialog.dispose();
-            } catch (NumberFormatException ex) {
-                JOptionPane.showMessageDialog(dialog, "Legajo debe ser numérico.");
+            } catch (Exception ex) {
+                JOptionPane.showMessageDialog(dialog, "Error al guardar: " + ex.getMessage());
             }
         });
 
@@ -187,12 +196,12 @@ public class PanelAlumnos extends JPanel {
         int selectedRow = ((JTable) ((JScrollPane) getComponent(1)).getViewport().getView()).getSelectedRow();
         if (selectedRow >= 0) {
             int legajo = (int) tableModel.getValueAt(selectedRow, 0);
-            Alumno a = Facultad.getInstance().buscarAlumnoPorLegajo(legajo);
+            Alumno a = alumnoController.buscarAlumnoPorLegajo(legajo);
             if (a != null) {
                 int confirm = JOptionPane.showConfirmDialog(this, "¿Seguro eliminar a " + a.getNombre() + "?",
                         "Confirmar", JOptionPane.YES_NO_OPTION);
                 if (confirm == JOptionPane.YES_OPTION) {
-                    Facultad.getInstance().eliminarAlumno(a);
+                    alumnoController.eliminarAlumno(a);
                     refrescarTabla();
                 }
             }

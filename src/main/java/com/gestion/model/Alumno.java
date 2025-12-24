@@ -1,4 +1,4 @@
-package com.gestion;
+package com.gestion.model;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -55,6 +55,18 @@ public class Alumno {
         for (Cursada cursada : historiaAcademica) {
             if (cursada.getMateria().equals(m) && cursada.esFinalAprobado()) {
                 return true;
+            }
+        }
+        return false;
+    }
+
+    public boolean estaCursando(Materia m) {
+        for (Cursada cursada : historiaAcademica) {
+            if (cursada.getMateria().equals(m)) {
+                EstadoCursada e = cursada.getEstado();
+                return e == EstadoCursada.INSCRIPTO ||
+                        e == EstadoCursada.PARCIAL_APROBADO ||
+                        e == EstadoCursada.PARCIAL_DESAPROBADO;
             }
         }
         return false;
